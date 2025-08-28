@@ -11,3 +11,6 @@ wheels/
 
 
 .env
+
+calculator/lorem.txt
+calculator/pkg/morelorem.txt

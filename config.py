@@ -1,0 +1,4 @@
+
+
+CHARACTER_LIMIT = 10_000
+
