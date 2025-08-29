@@ -1,17 +1,41 @@
 from functions.get_files_info import get_files_info
 from functions.get_file_content import get_file_content
 from functions.write_file import write_file
+from functions.run_python_file import run_python_file
     
 
 
 def test():
-    test_write_file()
+    test_run_python()
+    #test_write_file()
     ##
     #test_file_reading()
     ##
     #test_files_listing()
     ##
     
+
+def test_run_python():
+    print("##### run calculator main.py")
+    result = run_python_file("calculator", "main.py")
+    print(result)
+    print()
+    print("##### run calculator 3+5")
+    result = run_python_file("calculator", "main.py", ["3 + 5"])
+    print(result)
+    print()
+    print("##### run calculator test.py")
+    result = run_python_file("calculator", "test.py")
+    print(result)
+    print()
+    print("##### run calculator ../main.py")
+    result = run_python_file("calculator", "../main.py") #should return an error
+    print(result)
+    print()
+    print("##### run calculator nonexistent.py")
+    result = run_python_file("calculator", "nonexistent.py") #should return an error
+    print(result)
+    print()
 
 def test_write_file():
     print("##### write file lorem.txt:")
