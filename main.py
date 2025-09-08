@@ -3,7 +3,10 @@ import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from functions.get_files_info import schema_get_files_info
+from functions.get_files_info import *
+from functions.get_file_content import *
+from functions.run_python import *
+from functions.write_file_content import *
 
 
 
@@ -41,12 +44,18 @@ You are a helpful AI coding agent.
 When a user asks a question or makes a request, make a function call plan. You can perform the following operations:
 
 - List files and directories
+- Read file contents
+- Execute Python files with optional arguments
+- Write or overwrite files
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
     available_functions = types.Tool(
         function_declarations=[
             schema_get_files_info,
+            schema_get_file_content,
+            schema_run_python_file,
+            schema_write_file,
         ]
     )
 
@@ -57,15 +66,59 @@ All paths you provide should be relative to the working directory. You do not ne
             tools=[available_functions], system_instruction=system_prompt
         )
     )
-    
     verbose and print(f"User prompt: {messages[0].parts[0].text}") 
     verbose and print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}") 
-    print(response.text)
-    print(f"Calling function: {response.function_calls}({response.function_calls.args})")
+    if response.function_calls:
+        for function_called in response.function_calls:
+            print(function_called.args)
+            call_result = call_function(function_called, verbose)
+            try:
+                payload = call_result.parts[0].function_response.response
+            except Exception:
+                raise RuntimeError("Function response missing")
+            verbose and print(f"-> {payload}")
+    else:
+        print(response.text)
+        
     verbose and print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
     
 
+def call_function(function_call_part, verbose=False):
+    if verbose:
+        print(f"Calling function: {function_call_part.name}({function_call_part.args})")
+    else:
+        print(f" - Calling function: {function_call_part.name}")
+    functions_list = {
+        "get_files_info": get_files_info,
+        "get_file_content": get_file_content,
+        "run_python_file": run_python_file,
+        "write_file": write_file,
+    }
+    
+    fname = function_call_part.name
+    if fname not in functions_list:
+        return types.Content(
+            role="tool",
+            parts=[
+                types.Part.from_function_response(
+                    name=fname,
+                    response={"error": f"Unknown function: {fname}"},
+                )
+            ],
+        )
+    kwargs = dict(function_call_part.args)
+    kwargs["working_directory"] = "./calculator"
+    function_result = functions_list[fname](**kwargs)
 
+    return types.Content(
+        role="tool",
+        parts=[
+            types.Part.from_function_response(
+                name=fname,
+                response={"result": function_result},
+            )
+        ],
+    )
 
 if __name__ == "__main__":
     main()
