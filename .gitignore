@@ -13,3 +13,4 @@ wheels/
 .env
 
 calculator/pkg/morelorem.txt
+.vscode/

@@ -30,9 +30,13 @@ def main():
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
-    
-    generate_content(client, messages, verbose)
-
+    for _ in range(20):
+        try:                
+            res = generate_content(client, messages, verbose)
+            if res == "done":
+                break
+        except Exception as err:
+            print(f"Error in generate_content: {err}")
 
     
 
@@ -66,19 +70,28 @@ All paths you provide should be relative to the working directory. You do not ne
             tools=[available_functions], system_instruction=system_prompt
         )
     )
+
+    for candidate in response.candidates:
+        messages.append(candidate.content)
+
     verbose and print(f"User prompt: {messages[0].parts[0].text}") 
     verbose and print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}") 
     if response.function_calls:
+        function_responses = []
         for function_called in response.function_calls:
             print(function_called.args)
             call_result = call_function(function_called, verbose)
+            function_responses.append(call_result.parts[0])            
             try:
                 payload = call_result.parts[0].function_response.response
             except Exception:
                 raise RuntimeError("Function response missing")
             verbose and print(f"-> {payload}")
+        message = types.Content(role="user", parts=function_responses)
+        messages.append(message)
     else:
         print(response.text)
+        return "done"
         
     verbose and print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
     
