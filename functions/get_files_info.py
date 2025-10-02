@@ -13,17 +13,16 @@ def get_files_info(working_directory, directory="."):
     if not target_dir.startswith(abs_working_directory):
         return f'Error: Cannot list "{directory}" as it is outside the permitted working directory'
 
-
-    result = []
     try:
+        file_info = []
         for filename in os.listdir(target_dir):
             fullpath = os.path.join(target_dir, filename)
             is_dir = os.path.isdir(fullpath)
             size = os.path.getsize(fullpath)
-            result.append(
+            file_info.append(
                 f"- {filename} file_size:{size} bytes, is_dir={is_dir}"
             )
-        return "\n".join(result)
+        return "\n".join(file_info)
     except Exception as err:
         return f"Error: unable to list files: {err}"
     

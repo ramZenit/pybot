@@ -16,12 +16,12 @@ def get_file_content(working_directory, file_path):
 
     try:
         with open(target_file, "r") as f:
-            content = f.read()            
-            if len(content) > CHARACTER_LIMIT:
-                file_content_string = f'{content[:CHARACTER_LIMIT]}[...File "{file_path}" truncated at 10000 characters]'
-            else:
-                file_content_string = content
-        return file_content_string
+            content = f.read(CHARACTER_LIMIT)            
+            if os.path.getsize(target_file) > CHARACTER_LIMIT:
+                content += (
+                    f'[...File "{file_path} truncated at {CHARACTER_LIMIT} characters]'
+                )                
+        return content
     except Exception as err:
         return f"Error: unable to read the file: {err}"
 
@@ -29,14 +29,15 @@ def get_file_content(working_directory, file_path):
 
 schema_get_file_content = types.FunctionDeclaration(
     name="get_file_content",
-    description="Read a file from a specified file path, constrained to the working directory.",
+    description=f"Reads and returns the first {CHARACTER_LIMIT} characters of the content form a specified file within the working directory.",
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
             "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="The file path to the file to read, relative to the working directory.",
+                description="The path to the file whose content should be read, relative to the working directory.",
             ),
         },
+        required=["file_path"]
     ),
 )

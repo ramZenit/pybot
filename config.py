@@ -1,4 +1,4 @@
-
-
+WORKING_DIR = "./calculator"
+MAX_ITERS = 20
 CHARACTER_LIMIT = 10_000
 
